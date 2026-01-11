@@ -5,7 +5,6 @@ import (
 	"os"
 )
 
-// (local / prod)
 func NewLogger(cfg *Config) *slog.Logger {
 	if cfg.LaunchLoc == "prod" && cfg.TgBotToken != "" && cfg.TgChatIDs != "" {
 		return newTelegramLogger(cfg)

@@ -39,11 +39,10 @@ func (h *telegramHandler) Handle(_ context.Context, r slog.Record) error {
 	msg.WriteString(fmt.Sprintf("[%s] %s\n", r.Level, r.Time.In(moscowLoc).Format("15:04:05")))
 	msg.WriteString(fmt.Sprintf("%s\n", r.Message))
 
-	// Обрабатываем атрибуты
 	if r.NumAttrs() > 0 {
 		r.Attrs(func(attr slog.Attr) bool {
 			msg.WriteString(fmt.Sprintf("▪️%s: %v\n", attr.Key, attr.Value.Any()))
-			return true // продолжаем обработку
+			return true
 		})
 	}
 
