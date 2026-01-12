@@ -126,14 +126,13 @@ func (h *telegramHandler) sendToTelegram(ctx context.Context, chatID, text strin
 	}
 	defer resp.Body.Close()
 
-	// Читаем тело ответа для диагностики
 	body, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("telegram API error: status %d, body: %s", resp.StatusCode, string(body))
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(body, &result); err != nil {
 		return fmt.Errorf("parse response: %w", err)
 	}

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"catch-up/internal/app"
-	"catch-up/internal/config"
 	"log/slog"
+	"my-crypto/internal/app"
+	"my-crypto/internal/config"
 )
 
 func main() {
