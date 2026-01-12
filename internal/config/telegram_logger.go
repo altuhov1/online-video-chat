@@ -45,7 +45,6 @@ func (h *telegramHandler) Handle(_ context.Context, r slog.Record) error {
 		})
 	}
 
-	// Отправляем асинхронно
 	go func(message string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
