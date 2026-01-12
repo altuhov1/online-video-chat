@@ -133,7 +133,6 @@ func (h *telegramHandler) sendToTelegram(ctx context.Context, chatID, text strin
 		return fmt.Errorf("telegram API error: status %d, body: %s", resp.StatusCode, string(body))
 	}
 
-	// Проверяем JSON ответ
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
 		return fmt.Errorf("parse response: %w", err)
