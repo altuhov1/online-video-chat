@@ -58,6 +58,7 @@ func (h *telegramHandler) Handle(_ context.Context, r slog.Record) error {
 
 	return nil
 }
+
 func (h *telegramHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return h
 }
