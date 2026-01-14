@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"log/slog"
+	"my-crypto/internal/api"
 	"my-crypto/internal/config"
 	"net/http"
 	"os"
@@ -44,7 +45,7 @@ func (a *App) initServices() {
 }
 
 func (a *App) initHTTP() {
-	handler, err := handlers.NewHandler(a.services.LinksService)
+	handler, err := api.NewHandler()
 	if err != nil {
 		slog.Error("Failed to create handler", "error", err)
 		os.Exit(1)
@@ -61,7 +62,7 @@ func (a *App) initHTTP() {
 	}
 }
 
-func (a *App) setupRoutes(handler *handlers.Handler) http.Handler {
+func (a *App) setupRoutes(handler *api.Handler) http.Handler {
 	mux := http.NewServeMux()
 
 	// Static files
