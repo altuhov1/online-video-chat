@@ -2,11 +2,14 @@ package config
 
 import (
 	"log/slog"
+	"os"
 	"strings"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 )
+
+const levelEarlyLogger string = "info"
 
 type Config struct {
 	ServerPort string `env:"PORT" envDefault:"8080"`
@@ -33,10 +36,9 @@ func getLogLevelFromString(levelStr string) slog.Level {
 
 func MustLoad() *Config {
 
-	logger := NewEarlyLogger()
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: getLogLevelFromString(levelEarlyLogger)}))
 
 	if err := godotenv.Load(); err != nil {
-
 		logger.Debug("Failed to load .env file", "error", err)
 	} else {
 		logger.Info("Loaded configuration from .env file")
@@ -50,8 +52,4 @@ func MustLoad() *Config {
 	logger.Info("Application started", "mode", cfg.LaunchLoc)
 
 	return &cfg
-}
-
-func (c *Config) GetLogLevel() slog.Level {
-	return getLogLevelFromString(c.LogLevel)
 }

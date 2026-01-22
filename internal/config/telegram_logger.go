@@ -92,17 +92,6 @@ func newTelegramLogger(cfg *Config) *slog.Logger {
 	return slog.New(handler)
 }
 
-func newTelegramLoggerFromEnv(token, chatIDsStr, logLevelStr string) *slog.Logger {
-	level := getLogLevelFromString(logLevelStr)
-	handler := &telegramHandler{
-		botToken: token,
-		chatIDs:  parseChatIDs(chatIDsStr),
-		level:    level,
-		client:   &http.Client{Timeout: 10 * time.Second},
-	}
-	return slog.New(handler)
-}
-
 func (h *telegramHandler) sendToTelegram(ctx context.Context, chatID, text string) error {
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", h.botToken)
 	payload := map[string]string{
