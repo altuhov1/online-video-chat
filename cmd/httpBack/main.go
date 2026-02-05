@@ -1,15 +1,12 @@
 package main
 
-import (
-	"log/slog"
-	"my-crypto/internal/app"
-	"my-crypto/internal/config"
-)
+import "net/http"
 
+func TODO(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("hello\n"))
+}
 func main() {
-	cfg := config.MustLoad()
-	logger := config.NewLogger(cfg)
-	slog.SetDefault(logger)
-	app := app.NewApp(cfg)
-	app.Run()
+	mux := http.ServeMux{}
+	mux.HandleFunc("/", TODO)
+	http.ListenAndServe(":8080", &mux)
 }
