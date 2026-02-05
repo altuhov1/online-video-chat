@@ -1,15 +1,8 @@
 package main
 
-import (
-	"log/slog"
-	"my-crypto/internal/app"
-	"my-crypto/internal/config"
-)
+import "my-crypto/internal/app"
 
 func main() {
-	cfg := config.MustLoad()
-	logger := config.NewLogger(cfg)
-	slog.SetDefault(logger)
-	app := app.NewApp(cfg)
-	app.Run()
+	appObj := app.NewApp()
+	appObj.AppStart()
 }
