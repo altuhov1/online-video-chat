@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Веб-камера</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f0f0f0;
+        }
+
+        #videoContainer {
+            text-align: center;
+        }
+
+        video {
+            border: 3px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            max-width: 100%;
+            height: auto;
+        }
+
+        .controls {
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="videoContainer">
+        <h2>Поток с веб-камеры</h2>
+        <video id="video" autoplay playsinline></video>
+        <div class="controls">
+            <button id="startBtn">Запустить камеру</button>
+            <button id="stopBtn" disabled>Остановить</button>
+        </div>
+        <p id="status">Статус: готов</p>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const status = document.getElementById('status');
+        let stream = null;
+
+        startBtn.addEventListener('click', async () => {
+            try {
+                status.textContent = 'Статус: запрашиваем доступ к камере...';
+
+                // Запрашиваем доступ к камере
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: false
+                });
+
+                // Подключаем поток к элементу video
+                video.srcObject = stream;
+
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                status.textContent = 'Статус: камера активна';
+
+            } catch (err) {
+                console.error('Ошибка:', err);
+                status.textContent = `Статус: ошибка - ${err.message}`;
+                alert(`Не удалось получить доступ к камере: ${err.message}`);
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (stream) {
+                // Останавливаем все треки (видео)
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                status.textContent = 'Статус: камера остановлена';
+                stream = null;
+            }
+        });
+    </script>
+</body>
+
+</html>
