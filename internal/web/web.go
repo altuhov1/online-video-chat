@@ -1,11 +1,14 @@
-package api
+package web
 
 import "net/http"
 
+type WsChatServer interface {
+	Test(w http.ResponseWriter, r *http.Request)
+}
 type wsServer struct {
 }
 
-func NewHandler() (*wsServer, error) {
+func NewWsServer() (WsChatServer, error) {
 	return &wsServer{}, nil
 }
 
