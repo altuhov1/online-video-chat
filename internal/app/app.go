@@ -19,7 +19,7 @@ func NewApp(conf config.Config) *AppServices {
 		slog.Error("websocket server did not initialize", "error", err)
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/test", webServer.Test)
+	// mux.HandleFunc("/test", webServer.Test)
 	app := &AppServices{
 		server: http.Server{
 			Addr:    conf.Port,
