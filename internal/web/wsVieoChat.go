@@ -53,6 +53,7 @@ func randomRoomNumber() int {
 	}
 	return randNum
 }
+
 func (s *wsServer) ConnetToRoom(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
