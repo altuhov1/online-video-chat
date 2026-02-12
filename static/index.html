@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <title>Видеочат - Подключение</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+
+        .info {
+            margin-top: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Подключиться к видеочату</h1>
+
+    <form id="connectionForm">
+        <div class="form-group">
+            <label for="name">Ваше имя:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="room">Номер комнаты (оставьте пустым для создания новой):</label>
+            <input type="number" id="room" name="room" min="1">
+        </div>
+
+        <div class="error" id="errorMessage"></div>
+
+        <button type="button" id="createRoomBtn">Создать комнату</button>
+        <button type="button" id="joinRoomBtn">Присоединиться</button>
+    </form>
+
+    <div class="info" id="infoMessage"></div>
+
+    <script src="/static/index.js"></script>
+</body>
+
+</html>

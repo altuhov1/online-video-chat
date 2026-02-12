@@ -23,8 +23,6 @@ const (
 	maxRoomNunber int = 100_000_000
 )
 
-type WsChatServer interface {
-}
 type wsServer struct {
 	wsUpgrader  *websocket.Upgrader
 	mu          sync.Mutex
@@ -63,6 +61,7 @@ func (s *wsServer) ConnetToRoom(w http.ResponseWriter, r *http.Request) {
 	info, err := io.ReadAll(r.Body)
 	if err != nil {
 		slog.Error("We have problen in ConnetInRoom", "err", err)
+		return 
 	}
 	UserInfo := new(models.UserConection)
 	json.Unmarshal(info, UserInfo)
@@ -107,13 +106,14 @@ func (s *wsServer) ConnetToRoom(w http.ResponseWriter, r *http.Request) {
 			connetcionToCreator: nil,
 			connetcionToGuest:   nil,
 		}
+		go roomWork(s.baseOfRooms[UserInfo.Room])
 	} else {
 		val.guest = UserInfo.Name
 		s.baseOfRooms[UserInfo.Room] = val
 	}
 	s.mu.Unlock()
 }
-func (s *wsServer) roomWork(r room) {
+func roomWork(r room) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 	for range ticker.C {

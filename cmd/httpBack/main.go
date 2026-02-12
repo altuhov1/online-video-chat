@@ -11,8 +11,9 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	slog.SetDefault(logger)
 	cong := config.Config{
-		Port: ":8080",
+		Port: ":3000",
 	}
+	
 	videoChat := app.NewApp(cong)
 	videoChat.AppStart()
 

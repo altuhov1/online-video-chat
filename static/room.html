@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <title>Видеочат - Комната</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+
+        #roomInfo {
+            background: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .video-wrapper {
+            flex: 1;
+            min-width: 300px;
+            max-width: 600px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .video-label {
+            padding: 10px;
+            background: #333;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: black;
+        }
+
+        #localVideo {
+            transform: scaleX(-1);
+            /* Зеркальное отображение для фронтальной камеры */
+        }
+
+        #controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            margin: 0 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        #leaveBtn {
+            background: #f44336;
+        }
+
+        #leaveBtn:hover {
+            background: #d32f2f;
+        }
+
+        #status {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+
+        .connecting {
+            color: orange;
+        }
+
+        .connected {
+            color: green;
+        }
+
+        .disconnected {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="roomInfo">
+        <h2>Комната: <span id="roomIdDisplay"></span></h2>
+        <p>Имя: <span id="userNameDisplay"></span></p>
+    </div>
+
+    <div class="video-container">
+        <div class="video-wrapper">
+            <div class="video-label">Вы</div>
+            <video id="localVideo" autoplay muted playsinline></video>
+        </div>
+        <div class="video-wrapper">
+            <div class="video-label">Собеседник</div>
+            <video id="remoteVideo" autoplay playsinline></video>
+        </div>
+    </div>
+
+    <div id="controls">
+        <button id="toggleVideoBtn">Выкл/Вкл Видео</button>
+        <button id="toggleAudioBtn">Выкл/Вкл Аудио</button>
+        <button id="leaveBtn">Покинуть комнату</button>
+    </div>
+
+    <div id="status" class="connecting">Подключение к комнате...</div>
+
+    <script src="/static/room.js"></script>
+</body>
+
+</html>

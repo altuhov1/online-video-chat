@@ -19,11 +19,17 @@ func NewApp(conf config.Config) *AppServices {
 		slog.Error("websocket server did not initialize", "error", err)
 	}
 	mux := http.NewServeMux()
-	// mux.HandleFunc("/test", webServer.Test)
+	mux.HandleFunc("/connect", webServer.ConnetToRoom)
+	mux.HandleFunc("/ws", webServer.TcpHandShakeForWs)
+	fs := http.FileServer(http.Dir("static"))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/index.html")
+	})
 	app := &AppServices{
 		server: http.Server{
 			Addr:    conf.Port,
-			Handler: http.NewServeMux(),
+			Handler: mux,
 		},
 		cfg: conf,
 	}
