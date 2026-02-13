@@ -1,11 +1,11 @@
 package models
 
 type UserConection struct {
-	Name string `json:"Name"`
-	Room int    `json:"Room"`
+	Name string `json:"name"`
+	Room int    `json:"room"`
 }
 
 type AnswerToUser struct {
-	Error string `json:"Error,omitempty"`
-	Room  int    `json:"Room"`
+	Error string `json:"error,omitempty"`
+	Room  int    `json:"room"`
 }

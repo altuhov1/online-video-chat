@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const connectionData = {
             Name: name,
-            Room: isCreating ? null : parseInt(roomInput.value)
+            Room: isCreating ? 0 : parseInt(roomInput.value)
         };
 
         fetch(`${baseUrl}/connect`, {
@@ -47,13 +47,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(data => {
-                if (data.success && data.roomId) {
+
+                if (data.room && data.room > 0) {
                     // Сохраняем данные в sessionStorage
                     sessionStorage.setItem('userName', name);
-                    sessionStorage.setItem('roomId', data.roomId);
+                    sessionStorage.setItem('roomId', data.room);
 
                     // Переходим в комнату
-                    window.location.href = 'room.html';
+                    console.log(sessionStorage.getItem('userName'), sessionStorage.getItem('roomId'));
+                    window.location.href = '/static/room.html';
                 } else {
                     showError(data.message || 'Неизвестная ошибка');
                 }

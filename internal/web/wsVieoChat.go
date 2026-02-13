@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"math/rand"
@@ -51,17 +52,20 @@ func randomRoomNumber() int {
 	}
 	return randNum
 }
-
+func (s *wsServer) RootHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "static/index.html")
+}
 func (s *wsServer) ConnetToRoom(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+
 	defer r.Body.Close()
 	info, err := io.ReadAll(r.Body)
 	if err != nil {
 		slog.Error("We have problen in ConnetInRoom", "err", err)
-		return 
+		return
 	}
 	UserInfo := new(models.UserConection)
 	json.Unmarshal(info, UserInfo)
@@ -112,6 +116,7 @@ func (s *wsServer) ConnetToRoom(w http.ResponseWriter, r *http.Request) {
 		s.baseOfRooms[UserInfo.Room] = val
 	}
 	s.mu.Unlock()
+	fmt.Println(UserInfo.Room)
 }
 func roomWork(r room) {
 	ticker := time.NewTicker(2 * time.Second)

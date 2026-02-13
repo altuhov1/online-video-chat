@@ -11,12 +11,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // Получаем данные из sessionStorage
     const userName = sessionStorage.getItem('userName');
     const roomId = sessionStorage.getItem('roomId');
+    console.log(sessionStorage.getItem('userName'), sessionStorage.getItem('roomId'));
 
-    if (!userName || !roomId) {
-        alert('Нет данных о комнате. Вернитесь на страницу подключения.');
-        window.location.href = 'index.html';
-        return;
-    }
+    // if (!userName || !roomId) {
+    //     console.log(sessionStorage.getItem('userName'), sessionStorage.getItem('roomId'));
+    //     alert('Нет данных о комнате. Вернитесь на страницу подключения.');
+    //     window.location.href = 'index.html';
+    //     return;
+    // }
 
     // Отображаем информацию
     roomIdDisplay.textContent = roomId;
