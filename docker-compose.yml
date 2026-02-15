@@ -1,0 +1,34 @@
+services:
+  app:
+    networks:
+      - internal
+      - public
+    build:
+      context: .
+      dockerfile: Dockerfile.golang
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./static:/usr/share/caddy
+      - caddy_data:/data      
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+    depends_on:
+      - app
+    networks:
+      - internal
+      - public
+
+networks:
+  internal:
+    internal: true
+  public:
+
+
+volumes:
+  caddy_logs:
+  caddy_data: 
+  caddy_config: 

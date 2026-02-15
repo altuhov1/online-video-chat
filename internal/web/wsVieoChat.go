@@ -27,7 +27,7 @@ const (
 type wsServer struct {
 	wsUpgrader  *websocket.Upgrader
 	mu          sync.Mutex
-	baseOfRooms map[int]room
+	baseOfRooms map[int]*room
 }
 
 type room struct {
@@ -41,7 +41,7 @@ func NewWsServer() (WsChatServer, error) {
 	return &wsServer{
 		wsUpgrader:  &websocket.Upgrader{},
 		mu:          sync.Mutex{},
-		baseOfRooms: make(map[int]room),
+		baseOfRooms: make(map[int]*room),
 	}, nil
 }
 
@@ -76,7 +76,7 @@ func (s *wsServer) ConnetToRoom(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if val, ok := s.baseOfRooms[UserInfo.Room]; ok && val.guest == "" {
+	if val, ok := s.baseOfRooms[UserInfo.Room]; ok && val.guest != "" {
 		mes, err := json.Marshal(models.AnswerToUser{
 			Error: ErrorMaxPeopleInRoom,
 			Room:  -1,
@@ -104,7 +104,7 @@ func (s *wsServer) ConnetToRoom(w http.ResponseWriter, r *http.Request) {
 	w.Write(mes)
 	s.mu.Lock()
 	if val, ok := s.baseOfRooms[UserInfo.Room]; !ok {
-		s.baseOfRooms[UserInfo.Room] = room{
+		s.baseOfRooms[UserInfo.Room] = &room{
 			creator:             UserInfo.Name,
 			guest:               "",
 			connetcionToCreator: nil,
@@ -118,11 +118,13 @@ func (s *wsServer) ConnetToRoom(w http.ResponseWriter, r *http.Request) {
 	s.mu.Unlock()
 	fmt.Println(UserInfo.Room)
 }
-func roomWork(r room) {
+func roomWork(r *room) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 	for range ticker.C {
+		fmt.Println(r)
 		if r.connetcionToCreator != nil && r.connetcionToGuest != nil {
+
 			go connectionProcessing(r.connetcionToCreator, r.connetcionToGuest)
 			go connectionProcessing(r.connetcionToGuest, r.connetcionToCreator)
 			break
@@ -132,6 +134,13 @@ func roomWork(r room) {
 }
 
 func connectionProcessing(from, to *websocket.Conn) {
+	fmt.Println("Тест")
+	err := to.WriteMessage(websocket.BinaryMessage, []byte("ready"))
+	if err != nil {
+		slog.Info("we lose the connect")
+		return
+	}
+	fmt.Println("Все заработало")
 	for {
 		typeMes, mes, err := from.ReadMessage()
 		if err != nil {
@@ -154,8 +163,8 @@ func (s *wsServer) TcpHandShakeForWs(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	roomNumStr := r.Header.Get("room")
-	user := r.Header.Get("user")
+	roomNumStr := r.URL.Query().Get("room")
+	user := r.URL.Query().Get("user")
 	roomNumInt, err := strconv.Atoi(roomNumStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -178,5 +187,6 @@ func (s *wsServer) TcpHandShakeForWs(w http.ResponseWriter, r *http.Request) {
 		room.connetcionToGuest = con
 	}
 	s.baseOfRooms[roomNumInt] = room
+	fmt.Println("Тут все сработало")
 	s.mu.Unlock()
 }

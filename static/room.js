@@ -1,226 +1,269 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const localVideo = document.getElementById('localVideo');
-    const remoteVideo = document.getElementById('remoteVideo');
-    const roomIdDisplay = document.getElementById('roomIdDisplay');
-    const userNameDisplay = document.getElementById('userNameDisplay');
-    const toggleVideoBtn = document.getElementById('toggleVideoBtn');
-    const toggleAudioBtn = document.getElementById('toggleAudioBtn');
-    const leaveBtn = document.getElementById('leaveBtn');
-    const statusDiv = document.getElementById('status');
+// room.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
 
-    // Получаем данные из sessionStorage
-    const userName = sessionStorage.getItem('userName');
-    const roomId = sessionStorage.getItem('roomId');
-    console.log(sessionStorage.getItem('userName'), sessionStorage.getItem('roomId'));
+// Получаем элементы DOM
+const localVideo = document.getElementById('localVideo');
+const remoteVideo = document.getElementById('remoteVideo');
+const roomIdDisplay = document.getElementById('roomIdDisplay');
+const userNameDisplay = document.getElementById('userNameDisplay');
+const toggleVideoBtn = document.getElementById('toggleVideoBtn');
+const toggleAudioBtn = document.getElementById('toggleAudioBtn');
+const leaveBtn = document.getElementById('leaveBtn');
+const statusDiv = document.getElementById('status');
 
-    // if (!userName || !roomId) {
-    //     console.log(sessionStorage.getItem('userName'), sessionStorage.getItem('roomId'));
-    //     alert('Нет данных о комнате. Вернитесь на страницу подключения.');
-    //     window.location.href = 'index.html';
-    //     return;
-    // }
+// Получаем данные из sessionStorage
+const userName = sessionStorage.getItem('userName');
+const roomId = sessionStorage.getItem('roomId');
 
-    // Отображаем информацию
-    roomIdDisplay.textContent = roomId;
-    userNameDisplay.textContent = userName;
+console.log('Room ID:', roomId, 'User:', userName);
 
-    // Настройки WebRTC
-    const configuration = {
-        iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' }
-        ]
-    };
+if (!userName || !roomId) {
+    alert('Нет данных о комнате');
+    window.location.href = '/static/index.html';
+}
 
-    let localStream;
-    let peerConnection;
-    let ws;
-    let isVideoEnabled = true;
-    let isAudioEnabled = true;
+// Отображаем информацию
+roomIdDisplay.textContent = roomId;
+userNameDisplay.textContent = userName;
 
-    // Базовый URL вашего бекенда
-    const baseUrl = 'ws://localhost:3000'; // Измените на ваш URL
+// Переменные
+let localStream;
+let ws;
+let isVideoEnabled = true;
+let isAudioEnabled = true;
+let readyToSend = false;
+let mediaRecorder = null;
+let receivedChunks = [];
+let isVideoPlaying = false;
 
-    // Инициализация
-    init();
+// Инициализация
+async function init() {
+    try {
+        statusDiv.textContent = 'Запрос доступа к камере...';
 
-    async function init() {
-        try {
-            // Получаем доступ к медиаустройствам
-            localStream = await navigator.mediaDevices.getUserMedia({
-                video: true,
-                audio: true
-            });
-
-            localVideo.srcObject = localStream;
-            updateStatus('Подключение к WebSocket...', 'connecting');
-
-            // Подключаемся к WebSocket
-            connectWebSocket();
-
-        } catch (error) {
-            console.error('Ошибка доступа к медиаустройствам:', error);
-            updateStatus('Ошибка доступа к камере/микрофону', 'disconnected');
-            alert('Не удалось получить доступ к камере и микрофону. Проверьте разрешения.');
-        }
-    }
-
-    function connectWebSocket() {
-        // Подключаемся к вашему WebSocket эндпоинту
-        ws = new WebSocket(`${baseUrl}/ws?room=${roomId}&user=${encodeURIComponent(userName)}`);
-
-        ws.onopen = () => {
-            updateStatus('Подключено к комнате. Ожидание собеседника...', 'connecting');
-            setupPeerConnection();
-        };
-
-        ws.onmessage = async (event) => {
-            try {
-                const message = JSON.parse(event.data);
-
-                switch (message.type) {
-                    case 'offer':
-                        await handleOffer(message);
-                        break;
-                    case 'answer':
-                        await handleAnswer(message);
-                        break;
-                    case 'ice-candidate':
-                        await handleIceCandidate(message);
-                        break;
-                    case 'user-joined':
-                        updateStatus('Собеседник присоединился. Установка соединения...', 'connecting');
-                        break;
-                    case 'user-left':
-                        updateStatus('Собеседник покинул комнату', 'disconnected');
-                        if (peerConnection) {
-                            peerConnection.close();
-                            peerConnection = null;
-                        }
-                        remoteVideo.srcObject = null;
-                        break;
-                    case 'error':
-                        console.error('Ошибка сервера:', message.message);
-                        updateStatus('Ошибка: ' + message.message, 'disconnected');
-                        break;
-                }
-            } catch (error) {
-                // Если сообщение не JSON, это может быть бинарные данные
-                // В реальном приложении здесь будет обработка видео/аудио данных
-                console.log('Получены бинарные данные:', event.data);
-            }
-        };
-
-        ws.onerror = (error) => {
-            console.error('WebSocket ошибка:', error);
-            updateStatus('Ошибка соединения', 'disconnected');
-        };
-
-        ws.onclose = () => {
-            updateStatus('Соединение закрыто', 'disconnected');
-        };
-    }
-
-    function setupPeerConnection() {
-        peerConnection = new RTCPeerConnection(configuration);
-
-        // Добавляем локальный поток
-        localStream.getTracks().forEach(track => {
-            peerConnection.addTrack(track, localStream);
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true
         });
 
-        // Обработчики ICE кандидатов
-        peerConnection.onicecandidate = (event) => {
-            if (event.candidate && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'ice-candidate',
-                    candidate: event.candidate
-                }));
+        localVideo.srcObject = localStream;
+        console.log('Локальное видео получено');
+
+        // Подключаемся к серверу
+        connectWebSocket();
+    } catch (error) {
+        console.error('Ошибка доступа к камере:', error);
+        statusDiv.textContent = 'Ошибка доступа к камере/микрофону';
+    }
+}
+
+function connectWebSocket() {
+    statusDiv.textContent = 'Подключение к серверу...';
+
+    const wsUrl = `ws://localhost:3000/ws?room=${roomId}&user=${encodeURIComponent(userName)}`;
+    console.log('Подключение к:', wsUrl);
+
+    ws = new WebSocket(wsUrl);
+    ws.binaryType = 'arraybuffer';
+
+    ws.onopen = function () {
+        console.log('WebSocket подключен');
+        statusDiv.textContent = 'Подключено к серверу. Ожидание собеседника...';
+    };
+
+    ws.onmessage = function (event) {
+        if (typeof event.data === 'string') {
+            // Текстовое сообщение
+            console.log('Текстовое сообщение от сервера:', event.data);
+
+            try {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'user-joined') {
+                    statusDiv.textContent = 'Собеседник подключился';
+                } else if (data.type === 'user-left') {
+                    statusDiv.textContent = 'Собеседник отключился';
+                    remoteVideo.src = '';
+                    readyToSend = false;
+                    receivedChunks = [];
+                    isVideoPlaying = false;
+
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                    }
+                }
+            } catch (e) {
+                console.log('Не JSON сообщение');
+            }
+        } else {
+            // Бинарные данные (ArrayBuffer)
+            console.log('Получены бинарные данные, размер:', event.data.byteLength);
+
+            // Проверяем, не сигнал ли это ready (маленький размер)
+            if (event.data.byteLength === 5) {
+                // Конвертируем ArrayBuffer в строку для проверки
+                const text = new TextDecoder().decode(event.data);
+                console.log('Содержимое:', text);
+
+                if (text === "ready") {
+                    console.log('!!! ПОЛУЧЕН СИГНАЛ READY !!!');
+                    statusDiv.textContent = 'Собеседник подключен. Начинаем передачу видео...';
+                    readyToSend = true;
+
+                    // Начинаем отправлять свое видео
+                    startSendingVideo();
+
+                    // Очищаем буфер для нового видео
+                    receivedChunks = [];
+                    isVideoPlaying = false;
+                    return;
+                }
+            }
+
+            // Если это не ready и мы готовы принимать видео
+            if (readyToSend && event.data.byteLength > 0) {
+                // Добавляем в буфер
+                receivedChunks.push(event.data);
+                console.log('Добавлен чанк видео, всего чанков:', receivedChunks.length);
+
+                // Если видео еще не играет и накопили достаточно чанков
+                if (!isVideoPlaying && receivedChunks.length >= 3) {
+                    playVideo();
+                }
+            }
+        }
+    };
+
+    ws.onerror = function (error) {
+        console.error('WebSocket ошибка:', error);
+        statusDiv.textContent = 'Ошибка подключения к серверу';
+    };
+
+    ws.onclose = function () {
+        console.log('WebSocket закрыт');
+        statusDiv.textContent = 'Соединение с сервером закрыто';
+        readyToSend = false;
+        receivedChunks = [];
+        isVideoPlaying = false;
+
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+        }
+    };
+}
+
+function playVideo() {
+    if (isVideoPlaying || receivedChunks.length === 0) return;
+
+    console.log('Запускаем видео, всего чанков:', receivedChunks.length);
+
+    // Создаем Blob из всех полученных чанков
+    const videoBlob = new Blob(receivedChunks, { type: 'video/webm' });
+    const videoUrl = URL.createObjectURL(videoBlob);
+
+    remoteVideo.onplaying = function () {
+        console.log('Видео начало играть');
+        isVideoPlaying = true;
+    };
+
+    remoteVideo.onerror = function (e) {
+        console.error('Ошибка видео:', e);
+    };
+
+    remoteVideo.onended = function () {
+        console.log('Видео закончилось');
+        // Можно продолжить принимать новые чанки
+    };
+
+    remoteVideo.src = videoUrl;
+    remoteVideo.play().catch(e => console.error('Ошибка воспроизведения:', e));
+}
+
+function startSendingVideo() {
+    if (!readyToSend) {
+        console.log('Еще не готовы отправлять видео');
+        return;
+    }
+
+    console.log('НАЧИНАЕМ ОТПРАВКУ ВИДЕО НА СЕРВЕР');
+
+    try {
+        let mimeType = 'video/webm;codecs=vp8,opus';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'video/webm';
+            console.log('Используем формат:', mimeType);
+        }
+
+        mediaRecorder = new MediaRecorder(localStream, {
+            mimeType: mimeType
+        });
+
+        mediaRecorder.ondataavailable = function (event) {
+            if (event.data.size > 0 && ws.readyState === WebSocket.OPEN && readyToSend) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    ws.send(reader.result);
+                    console.log('Отправлен кусок видео, размер:', reader.result.byteLength);
+                };
+                reader.readAsArrayBuffer(event.data);
             }
         };
 
-        // Получение удаленного потока
-        peerConnection.ontrack = (event) => {
-            remoteVideo.srcObject = event.streams[0];
-            updateStatus('Соединение установлено', 'connected');
-        };
+        mediaRecorder.start(500);
+        console.log('MediaRecorder запущен');
 
-        peerConnection.onconnectionstatechange = () => {
-            console.log('Состояние соединения:', peerConnection.connectionState);
-        };
+    } catch (error) {
+        console.error('Ошибка запуска MediaRecorder:', error);
+        statusDiv.textContent = 'Ошибка запуска видео';
     }
+}
 
-    async function handleOffer(offer) {
-        if (!peerConnection) {
-            setupPeerConnection();
-        }
-
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-
-        ws.send(JSON.stringify({
-            type: 'answer',
-            sdp: answer.sdp
-        }));
-    }
-
-    async function handleAnswer(answer) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-    }
-
-    async function handleIceCandidate(candidate) {
-        try {
-            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate.candidate));
-        } catch (error) {
-            console.error('Ошибка добавления ICE кандидата:', error);
-        }
-    }
-
-    // Управление медиа
-    toggleVideoBtn.addEventListener('click', () => {
+// Управление видео
+toggleVideoBtn.addEventListener('click', () => {
+    if (localStream) {
         const videoTrack = localStream.getVideoTracks()[0];
         if (videoTrack) {
             videoTrack.enabled = !videoTrack.enabled;
             isVideoEnabled = videoTrack.enabled;
-            toggleVideoBtn.textContent = isVideoEnabled ? 'Выкл Видео' : 'Вкл Видео';
+            toggleVideoBtn.textContent = isVideoEnabled ? 'Выключить видео' : 'Включить видео';
+            toggleVideoBtn.style.backgroundColor = isVideoEnabled ? '#4CAF50' : '#f44336';
         }
-    });
+    }
+});
 
-    toggleAudioBtn.addEventListener('click', () => {
+// Управление аудио
+toggleAudioBtn.addEventListener('click', () => {
+    if (localStream) {
         const audioTrack = localStream.getAudioTracks()[0];
         if (audioTrack) {
             audioTrack.enabled = !audioTrack.enabled;
             isAudioEnabled = audioTrack.enabled;
-            toggleAudioBtn.textContent = isAudioEnabled ? 'Выкл Аудио' : 'Вкл Аудио';
+            toggleAudioBtn.textContent = isAudioEnabled ? 'Выключить аудио' : 'Включить аудио';
+            toggleAudioBtn.style.backgroundColor = isAudioEnabled ? '#4CAF50' : '#f44336';
         }
-    });
+    }
+});
 
-    leaveBtn.addEventListener('click', () => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.close();
-        }
+// Выход из комнаты
+leaveBtn.addEventListener('click', () => {
+    console.log('Выход из комнаты');
 
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-        }
-
-        if (peerConnection) {
-            peerConnection.close();
-        }
-
-        sessionStorage.clear();
-        window.location.href = 'index.html';
-    });
-
-    function updateStatus(text, className) {
-        statusDiv.textContent = text;
-        statusDiv.className = className;
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
     }
 
-    // Обработка закрытия страницы
-    window.addEventListener('beforeunload', () => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.close();
-        }
-    });
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+    }
+
+    if (localStream) {
+        localStream.getTracks().forEach(track => {
+            track.stop();
+        });
+    }
+
+    sessionStorage.clear();
+    window.location.href = '/static/index.html';
 });
+
+// Запускаем инициализацию
+init();
