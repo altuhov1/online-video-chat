@@ -58,8 +58,7 @@ async function init() {
 
 function connectWebSocket() {
     statusDiv.textContent = 'Подключение к серверу...';
-
-    const wsUrl = `ws://localhost:3000/ws?room=${roomId}&user=${encodeURIComponent(userName)}`;
+    const wsUrl = `ws://www.coinsight.site/ws?room=${roomId}&user=${encodeURIComponent(userName)}`;
     console.log('Подключение к:', wsUrl);
 
     ws = new WebSocket(wsUrl);

@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const infoMessage = document.getElementById('infoMessage');
 
     // Базовый URL вашего бекенда
-    const baseUrl = 'http://localhost:3000'; // Измените на ваш URL
+    const baseUrl = 'https://www.coinsight.site'; // Измените на ваш URL
 
     createRoomBtn.addEventListener('click', function () {
         connectToRoom(true);
